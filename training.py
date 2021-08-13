@@ -28,6 +28,14 @@ def fit_(x, y, theta, alpha, max_iter):
             sys.exit("qqq")
     return theta
 
+def normalize(array):
+    ret = np.empty([])
+    minElem = min(array)
+    maxElem = max(array)
+    for elem in array:
+        ret.append(elem - minElem / maxElem - minElem)
+    return (ret)
+
 if __name__ == "__main__":
     #Check arg
     if len(sys.argv) != 2:
@@ -35,10 +43,16 @@ if __name__ == "__main__":
 
     #CSV to np.array
     data = np.genfromtxt(sys.argv[1], delimiter=',', skip_header=1)
-    x = data[:,0]
-    y = data[:,1]
-    print(x)
-    print(y)
+    miles = data[:,0]
+    price = data[:,1]
+    normMiles = normalize(miles)
+    normPrice = normalize(price)
+    print(miles)
+    print(price)
+    print(normMiles)
+    print(normPrice)
+    x = normMiles
+    y = normPrice
 
     #Run linear_regression
     theta = fit_(x, y, np.array([1, 1]), 5e-8, 15)
