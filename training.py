@@ -18,14 +18,11 @@ def gradient(x, y, theta):
 def fit_(x, y, theta, alpha, max_iter):
     for i in range(max_iter):
         grd = gradient(x, y, theta) * alpha
-        print(grd)
+        #print(grd)
         try:
             theta = theta - grd
         except RuntimeWarning:
-            print("Warning at {}".format(i))
-            print(theta)
-            print(grd)
-            sys.exit("qqq")
+            sys.exit("Warning at {}".format(i))
     return theta
 
 def normalize(array):
@@ -33,7 +30,15 @@ def normalize(array):
     minElem = min(array)
     maxElem = max(array)
     for elem in array:
-        ret.append(elem - minElem / maxElem - minElem)
+        ret = np.append(ret, (elem - minElem) / (maxElem - minElem))
+    return (ret[1:])
+
+def denormalize(original, array):
+    ret = np.empty([])
+    minElem = min(original)
+    maxElem = max(original)
+    for elem in array:
+        ret = np.append(ret, (elem * (maxElem - minElem)) + minElem)
     return (ret)
 
 if __name__ == "__main__":
@@ -47,19 +52,15 @@ if __name__ == "__main__":
     price = data[:,1]
     normMiles = normalize(miles)
     normPrice = normalize(price)
-    print(miles)
-    print(price)
-    print(normMiles)
-    print(normPrice)
     x = normMiles
     y = normPrice
 
     #Run linear_regression
-    theta = fit_(x, y, np.array([1, 1]), 5e-8, 15)
+    theta = fit_(x, y, np.array([1, 1]), 5e-8, 150000)
 
     #save
     try:
-        np.savetxt("theta.csv", theta.reshape(1, -1), delimiter=',', header="theta0,theta1", fmt="%1.8f")
+        np.savetxt("thetas.csv", theta.reshape(1, -1), delimiter=',', header="theta0,theta1", fmt="%1.8f")
     except:
         sys.exit("Error saving theta.csv")
 
@@ -67,6 +68,7 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = plt.axes()
     plt.plot(x, y, ".r")
+    #plt.plot(miles, price, ".b")
 
     f = lambda var: theta[1] * var + theta[0]
     xx = np.linspace(x.min(), x.max(), num=100)
