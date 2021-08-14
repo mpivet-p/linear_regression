@@ -1,9 +1,7 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-import warnings
 plt.style.use("seaborn-whitegrid")
-warnings.filterwarnings("error")
 
 def gradient(x, y, theta):
     m = x.shape[0]
@@ -17,12 +15,13 @@ def gradient(x, y, theta):
 
 def fit_(x, y, theta, alpha, max_iter):
     for i in range(max_iter):
+        prev_theta = theta
         grd = gradient(x, y, theta) * alpha
-        #print(grd)
-        try:
-            theta = theta - grd
-        except RuntimeWarning:
-            sys.exit("Warning at {}".format(i))
+        theta = theta - grd
+        if (i % int(max_iter / 25)) == 0:
+            print(theta)
+        if i > max_iter / 4 and theta[0] == prev_theta[0] and theta[1] == prev_theta[1]:
+            break
     return theta
 
 def normalize(array):
@@ -33,45 +32,44 @@ def normalize(array):
         ret = np.append(ret, (elem - minElem) / (maxElem - minElem))
     return (ret[1:])
 
-def denormalize(original, array):
-    ret = np.empty([])
-    minElem = min(original)
-    maxElem = max(original)
-    for elem in array:
-        ret = np.append(ret, (elem * (maxElem - minElem)) + minElem)
-    return (ret)
+def denormalize(array, elem):
+    return ((elem * (max(array) - min(array))) + min(array))
+
+def disp_graph(x, y, theta):
+    #Matplotlib
+
+    fx = [min(x), max(x)]
+    fy = []
+    for elem in fx:
+        elem = theta[1] * ((elem - fx[0]) / (fx[1] - fx[0])) + theta[0]
+        fy.append(denormalize(y, elem))
+     np.set_printoptions(suppress=True)
+    print(np.polyfit(fx, fy,1))
+    plt.plot(x, y, "+r")
+    plt.plot(fx, fy, "-b")
+    plt.xlabel("Miles")
+    plt.ylabel("Price")
+    plt.show()
+
+def save_theta(theta):
+    try:
+        np.savetxt("theta.csv", theta.reshape(1, -1), delimiter=',', header="theta0,theta1", fmt="%1.8f")
+    except:
+        sys.exit("ft_linear_regression: Error saving theta.csv")
+
+def get_dataset():
+    if len(sys.argv) != 2:
+        sys.exit("ft_linear_regression: Wrong argument number")
+    try:
+        data = np.genfromtxt(sys.argv[1], delimiter=',', skip_header=1)
+    except:
+        sys.exit("ft_linear_regression: Unable to open file")
+
+    return (data[:,0], data[:,1], normalize(data[:,0]), normalize(data[:,1]))
 
 if __name__ == "__main__":
-    #Check arg
-    if len(sys.argv) != 2:
-        sys.exit("Wrong argument number")
-
-    #CSV to np.array
-    data = np.genfromtxt(sys.argv[1], delimiter=',', skip_header=1)
-    miles = data[:,0]
-    price = data[:,1]
-    normMiles = normalize(miles)
-    normPrice = normalize(price)
-    x = normMiles
-    y = normPrice
-
+    miles, price, x, y = get_dataset()
     #Run linear_regression
-    theta = fit_(x, y, np.array([1, 1]), 5e-8, 150000)
-
-    #save
-    try:
-        np.savetxt("thetas.csv", theta.reshape(1, -1), delimiter=',', header="theta0,theta1", fmt="%1.8f")
-    except:
-        sys.exit("Error saving theta.csv")
-
-    #Matplotlib
-    fig = plt.figure()
-    ax = plt.axes()
-    plt.plot(x, y, ".r")
-    #plt.plot(miles, price, ".b")
-
-    f = lambda var: theta[1] * var + theta[0]
-    xx = np.linspace(x.min(), x.max(), num=100)
-    plt.plot(xx, f(xx))
-
-    plt.show()
+    theta = fit_(x, y, np.array([1, 1]), 1, 2000)
+    save_theta(theta)
+    disp_graph(miles, price, theta)
